@@ -38,81 +38,67 @@
     <div id="label">Đang tải và kiểm tra camera...</div>
 
 <script>
-    // Đường dẫn tới model. Giả định model.json và metadata.json nằm cùng thư mục
-    const URL = "./";
+    // Đường dẫn tới model. Giả định model.json và metadata.json nằm cùng thư mục
+    const URL = "./";
 
-    let model, webcam, maxPredictions;
+    let model, webcam, maxPredictions;
 
-    async function init() {
-        try {
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
+    async function init() {
+        try {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
 
-            // 1. Tải model
-            model = await tmImage.load(modelURL, metadataURL);
-            maxPredictions = model.getTotalClasses();
+            // 1. Tải model
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
 
-            // 2. Thiết lập webcam
-            const flip = true; 
-            webcam = new tmImage.Webcam(700, 450, flip); 
-            await webcam.setup(); // Yêu cầu quyền truy cập camera
-            await webcam.play();
-            
-            // Bắt đầu vòng lặp dự đoán
-            window.requestAnimationFrame(loop);
+            // 2. Thiết lập webcam
+            // Kích thước và flip theo cấu hình mới nhất của bạn: (700, 450)
+            const flip = true; 
+            webcam = new tmImage.Webcam(700, 450, flip); 
+            await webcam.setup(); // Yêu cầu quyền truy cập camera
+            await webcam.play();
+            
+            // Bắt đầu vòng lặp dự đoán
+            window.requestAnimationFrame(loop);
 
-            // 3. Gắn canvas của webcam vào container
-            document.getElementById("webcam-container").appendChild(webcam.canvas);
-            
-            document.getElementById("label").innerText = "Đã sẵn sàng! Đưa món ăn vào trước camera...";
-        } catch (error) {
-            // Thêm xử lý lỗi nếu model/camera thất bại
-            console.error("Lỗi khởi tạo:", error);
-            document.getElementById("label").innerHTML = 
-                `LỖI KHỞI TẠO: ${error.message} <br> 
-                 <small>Kiểm tra quyền truy cập camera hoặc đường dẫn model (cần Live Server/Hosting).</small>`;
-        }
-    }
+            // 3. Gắn canvas của webcam vào container
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
+            
+            document.getElementById("label").innerText = "Đã sẵn sàng! Đưa món ăn vào trước camera...";
+        } catch (error) {
+            // Xử lý lỗi
+            console.error("Lỗi khởi tạo:", error);
+            document.getElementById("label").innerHTML = 
+                `LỖI KHỞI TẠO: ${error.message} <br> 
+                 <small>Kiểm tra quyền truy cập camera hoặc đường dẫn model (cần Live Server/Hosting).</small>`;
+        }
+    }
 
-    async function loop() {
-        webcam.update(); // Cập nhật khung hình
-        await predict();
-        window.requestAnimationFrame(loop);
-    }
+    async function loop() {
+        webcam.update(); // Cập nhật khung hình
+        await predict();
+        window.requestAnimationFrame(loop);
+    }
 
-    async function predict() {
-        // Dự đoán và tìm ra kết quả tốt nhất
-        const prediction = await model.predict(webcam.canvas);
-        let best = prediction[0];
-        for (let i = 1; i < prediction.length; i++) {
-            if (prediction[i].probability > best.probability) {
-                best = prediction[i];
-            }
-        }
-        
-        // --- PHẦN CODE ĐÃ ĐƯỢC ĐƠN GIẢN HÓA ---
-        
-        // Chỉ hiển thị TÊN LỚP (best.className)
-        document.getElementById("label").innerHTML = 
-            `${best.className}`; // <-- Đã xóa: (${probabilityPercent}%)
-    }
-        
-        // Tìm kết quả có xác suất cao nhất
-        let best = prediction[0];
-        for (let i = 1; i < prediction.length; i++) {
-            if (prediction[i].probability > best.probability) {
-                best = prediction[i];
-            }
-        }
+    async function predict() {
+        // Dự đoán và tìm ra kết quả tốt nhất
+        const prediction = await model.predict(webcam.canvas);
+        let best = prediction[0];
+        for (let i = 1; i < prediction.length; i++) {
+            if (prediction[i].probability > best.probability) {
+                best = prediction[i];
+            }
+        }
+        
+        // Chỉ hiển thị TÊN LỚP (best.className) - Theo yêu cầu của bạn
+        document.getElementById("label").innerHTML = 
+            `${best.className}`; 
+    }
 
-        // Hiển thị kết quả
-        const probabilityPercent = (best.probability * 100).toFixed(1);
-        document.getElementById("label").innerHTML = 
-            `${best.className} (${probabilityPercent}%)`;
-    }
-
-    init();
+    init();
 </script>
 </body>
 
 </html>
+
