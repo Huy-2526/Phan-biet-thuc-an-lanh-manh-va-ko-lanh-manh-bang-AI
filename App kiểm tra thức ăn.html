@@ -81,7 +81,21 @@
     }
 
     async function predict() {
+        // Dự đoán và tìm ra kết quả tốt nhất
         const prediction = await model.predict(webcam.canvas);
+        let best = prediction[0];
+        for (let i = 1; i < prediction.length; i++) {
+            if (prediction[i].probability > best.probability) {
+                best = prediction[i];
+            }
+        }
+        
+        // --- PHẦN CODE ĐÃ ĐƯỢC ĐƠN GIẢN HÓA ---
+        
+        // Chỉ hiển thị TÊN LỚP (best.className)
+        document.getElementById("label").innerHTML = 
+            `${best.className}`; // <-- Đã xóa: (${probabilityPercent}%)
+    }
         
         // Tìm kết quả có xác suất cao nhất
         let best = prediction[0];
@@ -100,4 +114,5 @@
     init();
 </script>
 </body>
+
 </html>
