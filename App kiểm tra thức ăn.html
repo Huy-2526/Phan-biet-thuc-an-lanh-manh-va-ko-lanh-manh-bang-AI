@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Phân biệt thức ăn - THCS Bình Thạnh</title>
+    <title>AI Health Scanner v3.0 - Huy</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
@@ -37,7 +37,7 @@
 
         @keyframes blink-animation {
             0% { box-shadow: 0 0 5px #1e90ff; }
-            50% { box-shadow: 0 0 20px #00ff00, 0 0 30px #00ff00; transform: scale(1.02); }
+            50% { box-shadow: 0 0 25px #00ff00, 0 0 40px #00ff00; transform: scale(1.02); }
             100% { box-shadow: 0 0 5px #1e90ff; }
         }
 
@@ -58,7 +58,7 @@
 
 <header>
     <div class="header-left">
-        <div class="brand">AI FOOD CHECKER - v2.5</div>
+        <div class="brand">AI FOOD CHECKER - v3.0 (TẬN DIỆT)</div>
     </div>
     <div id="clock">00:00:00</div>
 </header>
@@ -71,15 +71,15 @@
     <div class="control-panel">
         <div class="card">
             <div id="status" class="status-header">HỆ THỐNG ĐANG TẢI AI...</div>
-            <button class="btn btn-scan" onclick="scanFood()">QUÉT MÓN ĂN / ĐỒ UỐNG</button>
-            <button class="btn" style="background:#666" onclick="location.reload()">KHỞI ĐỘNG LẠI</button>
+            <button class="btn btn-scan" onclick="scanFood()">BẤM ĐỂ QUÉT TẤT CẢ</button>
+            <button class="btn" style="background:#666" onclick="location.reload()">LÀM MỚI HỆ THỐNG</button>
         </div>
 
         <div class="card">
-            <div style="font-weight: 800; color: var(--navy); font-size: 0.85rem; margin-bottom: 10px; text-transform: uppercase;">Kết quả kiểm tra</div>
+            <div style="font-weight: 800; color: var(--navy); font-size: 0.85rem; margin-bottom: 10px; text-transform: uppercase;">Kết quả phân tích dinh dưỡng</div>
             <div id="res-box">
                 <span id="res-text">ĐANG ĐỢI...</span>
-                <span id="res-sub">Bạn hãy đưa món ăn lại gần camera</span>
+                <span id="res-sub">Bạn hãy đưa thực phẩm lại gần camera</span>
             </div>
         </div>
     </div>
@@ -97,52 +97,68 @@
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
         .then(s => video.srcObject = s);
 
-    // Tải AI (MobileNet v1 nhẹ nhất)
+    // Tải AI
     async function initAI() {
         try {
             model = await mobilenet.load({version: 1, alpha: 0.25});
-            status.innerText = "HỆ THỐNG SẴN SÀNG";
+            status.innerText = "HỆ THỐNG ĐÃ SẴN SÀNG";
             status.style.borderLeftColor = "var(--green)";
         } catch (e) {
-            status.innerText = "LỖI KẾT NỐI AI!";
+            status.innerText = "LỖI TẢI AI! THỬ LẠI...";
         }
     }
 
     async function scanFood() {
         if (!model) return;
         
-        // Reset trạng thái
-        status.innerText = "ĐANG PHÂN TÍCH...";
+        status.innerText = "ĐANG SOI CẬN CẢNH...";
         resBox.className = "";
-        resText.innerText = "ĐANG SOI...";
+        resText.innerText = "CHỜ XÍU...";
         resText.className = "";
 
-        // Chụp và phân tích
         const predictions = await model.classify(video);
-        
-        // Gộp tất cả kết quả AI đoán được thành một chuỗi để kiểm tra cho chắc
         const allResults = predictions.map(p => p.className.toLowerCase()).join(" ");
 
-        // Danh sách các từ khóa "không lành mạnh"
+        // DANH SÁCH TỪ KHÓA TẬN DIỆT - HUY V3.0
         const badKeywords = [
-            "pizza", "burger", "fries", "chips", "candy", "coke", "soda", 
-            "hotdog", "doughnut", "donut", "fried", "chocolate", "sweet", 
-            "cake", "barbershop", "pastry", "cookie" 
+            // Đồ ăn nhanh & Dầu mỡ (Tóm gọn Pizza mặt trên/dưới)
+            "pizza", "burger", "fries", "chips", "hotdog", "fried", "dough", "bread", "toast", 
+            "bakery", "sandwich", "noodle", "instant", "ramen", "taco", "burrito", "snack",
+            
+            // Đồ ngọt & Bánh kẹo (Chặn Oreo, Bánh rán, Kẹo)
+            "candy", "chocolate", "sweet", "sugar", "donut", "doughnut", "cookie", "biscuit", 
+            "pastry", "cake", "ice cream", "dessert", "muffin", "syrup", "honey", "pudding",
+            
+            // Đồ uống (Chặn nước ngọt, trà sữa, cafe)
+            "coke", "soda", "pop", "cola", "coffee", "espresso", "latte", "juice", "beverage", 
+            "drink", "milkshake", "smoothie", "cocktail", "pepsi",
+            
+            // Bao bì (Chặn mặt sau hộp, mã vạch, túi nilon)
+            "package", "packet", "carton", "box", "barcode", "label", "container", "plastic", 
+            "wrapper", "bag", "envelope", "paper",
+            
+            // Các vật thể hay nhầm lẫn (Chống lỗi Barbershop, Bánh xe)
+            "barber", "pole", "wheel", "tire", "disk", "circular", "round", "button", "gear",
+            "puck", "dial", "lens", "camera", "barometer", "stopwatch", "machine"
         ];
 
-        // Kiểm tra xem có dính từ khóa nào không
-        const isUnhealthy = badKeywords.some(word => allResults.includes(word));
+        // Ưu tiên đồ xanh (Nếu thấy rau củ thì dù dính từ khóa khác vẫn cho qua)
+        const goodKeywords = ["apple", "banana", "vegetable", "fruit", "salad", "cucumber", "carrot", "broccoli"];
 
-        if (isUnhealthy) {
+        const isUnhealthy = badKeywords.some(word => allResults.includes(word));
+        const isHealthy = goodKeywords.some(word => allResults.includes(word));
+
+        // Logic: Nếu dính từ khóa xấu và không phải đồ tươi sống
+        if (isUnhealthy && !isHealthy) {
             resText.innerText = "❌ HẠN CHẾ ĂN/UỐNG";
             resText.className = "unhealthy-text";
-            resSub.innerText = "Món này có vẻ nhiều đường hoặc dầu mỡ!";
+            resSub.innerText = "Món này không tốt cho sức khỏe đâu bạn ơi!";
             resBox.className = "unhealthy-bg";
             status.style.borderLeftColor = "var(--red)";
         } else {
             resText.innerText = "✅ ĂN/UỐNG ĐƯỢC";
             resText.className = "healthy-text";
-            resSub.innerText = "Món này lành mạnh, bạn cứ thoải mái nhé!";
+            resSub.innerText = "Lành mạnh tuyệt vời! Cứ thoải mái nha bạn.";
             resBox.className = "healthy-bg";
             status.style.borderLeftColor = "var(--green)";
         }
@@ -150,7 +166,7 @@
         status.innerText = "QUÉT HOÀN TẤT";
     }
 
-    // Cập nhật đồng hồ mỗi giây
+    // Cập nhật đồng hồ
     setInterval(() => { 
         document.getElementById('clock').innerText = new Date().toLocaleTimeString('vi-VN'); 
     }, 1000);
