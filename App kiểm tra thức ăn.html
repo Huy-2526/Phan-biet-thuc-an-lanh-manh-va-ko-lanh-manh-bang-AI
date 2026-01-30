@@ -1,104 +1,146 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Food Detector (Final Web App)</title>
-
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Food Scanner v2.0 - Huy</title>
     
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+
     <style>
-        body { 
-            font-family: sans-serif; 
-            text-align: center; 
-            margin-top: 20px; 
-            background-color: #f4f4f9; 
+        :root { --navy: #0c2461; --green: #00ff00; --red: #ff3b30; --blue-school: #1e90ff; }
+        body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; touch-action: manipulation; }
+        
+        header { background: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--navy); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        .header-left .brand { font-weight: 800; color: var(--navy); font-size: 1rem; }
+        
+        .main-content { display: flex; flex-direction: column; max-width: 1200px; margin: 10px auto; padding: 0 10px; gap: 15px; }
+        @media (min-width: 768px) { .main-content { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; padding: 20px; } }
+
+        .camera-container { background: #000; border-radius: 15px; position: relative; aspect-ratio: 4/3; overflow: hidden; border: 3px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 100%; }
+        video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        
+        .control-panel { display: flex; flex-direction: column; gap: 15px; }
+        .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .status-header { background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center; font-weight: 800; color: var(--navy); border-left: 4px solid var(--navy); margin-bottom: 12px; font-size: 0.9rem; }
+        
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; background: var(--navy); color: white; margin-bottom: 10px; transition: 0.3s; font-size: 1rem; }
+        .btn:active { transform: scale(0.98); background: var(--blue-school); }
+
+        .btn-scan { 
+            background: #238636 !important; 
+            animation: blink-animation 2s infinite;
         }
-        /* Container cho webcam */
-        #webcam-container {
-            margin: 0 auto;
-            display: inline-block;
-            border: 4px solid #333;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+
+        @keyframes blink-animation {
+            0% { box-shadow: 0 0 5px #238636; }
+            50% { box-shadow: 0 0 20px #00ff00; transform: scale(1.02); }
+            100% { box-shadow: 0 0 5px #238636; }
         }
-        #label {
-            font-size: 28px;
-            margin-top: 20px;
-            color: #28a745; 
-            font-weight: bold;
-        }
+
+        #res-box { text-align: center; padding: 20px; border-radius: 8px; background: #f8f9fa; border: 2px dashed #ddd; }
+        #res-name { font-size: 1.5rem; font-weight: 800; display: block; margin-bottom: 5px; }
+        #res-desc { font-size: 0.9rem; font-weight: 600; }
+
+        .healthy { color: var(--green); }
+        .unhealthy { color: var(--red); }
+        #clock { font-weight: bold; font-size: 0.8rem; }
     </style>
 </head>
 <body>
-    
-    <h1>Camera Nhận Diện Món Ăn</h1>
-    <div id="webcam-container"></div>
-    <div id="label">Đang tải và kiểm tra camera...</div>
+
+<header>
+    <div class="header-left">
+        <div class="brand">AI FOOD CHECKER - v2.0</div>
+    </div>
+    <div id="clock">00:00:00</div>
+</header>
+
+<div class="main-content">
+    <div class="camera-container">
+        <video id="video" autoplay muted playsinline></video>
+    </div>
+
+    <div class="control-panel">
+        <div class="card">
+            <div id="status" class="status-header">ĐANG TẢI AI...</div>
+            
+            <button class="btn btn-scan" id="scanBtn" onclick="scanFood()">QUÉT MÓN ĂN NGAY</button>
+            <button class="btn" style="background:#666" onclick="location.reload()">LÀM MỚI TRANG</button>
+        </div>
+
+        <div class="card">
+            <div style="font-weight: 800; color: var(--navy); font-size: 0.85rem; margin-bottom: 10px;">KẾT QUẢ PHÂN TÍCH</div>
+            <div id="res-box">
+                <span id="res-name">SẴN SÀNG</span>
+                <span id="res-desc">Đưa món ăn vào camera rồi bấm quét bạn ơi!</span>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
-    // Đường dẫn tới model. Giả định model.json và metadata.json nằm cùng thư mục
-    const URL = "./";
+    let model;
+    const video = document.getElementById('video');
+    const status = document.getElementById('status');
+    const resName = document.getElementById('res-name');
+    const resDesc = document.getElementById('res-desc');
 
-    let model, webcam, maxPredictions;
+    // 1. Khởi động Camera
+    async function startCam() {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        video.srcObject = stream;
+    }
 
-    async function init() {
-        try {
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
+    // 2. Tải mô hình MobileNet (Bản siêu nhanh)
+    async function initAI() {
+        try {
+            model = await mobilenet.load({version: 1, alpha: 0.25});
+            status.innerText = "HỆ THỐNG SẴN SÀNG";
+            status.style.borderLeftColor = "var(--green)";
+        } catch (e) {
+            status.innerText = "LỖI TẢI AI!";
+        }
+    }
 
-            // 1. Tải model
-            model = await tmImage.load(modelURL, metadataURL);
-            maxPredictions = model.getTotalClasses();
+    // 3. Hàm quét món ăn
+    async function scanFood() {
+        if (!model) return;
+        
+        status.innerText = "ĐANG PHÂN TÍCH...";
+        resName.innerText = "ĐANG XEM...";
+        resName.className = "";
+        resDesc.innerText = "Vui lòng giữ yên món ăn...";
 
-            // 2. Thiết lập webcam
-            // Kích thước và flip theo cấu hình mới nhất của bạn: (700, 450)
-            const flip = true; 
-            webcam = new tmImage.Webcam(700, 450, flip); 
-            await webcam.setup(); // Yêu cầu quyền truy cập camera
-            await webcam.play();
-            
-            // Bắt đầu vòng lặp dự đoán
-            window.requestAnimationFrame(loop);
+        const predictions = await model.classify(video);
+        const item = predictions[0].className.split(',')[0].toUpperCase();
+        
+        // Danh sách đen
+        const unhealthy = ["PIZZA", "BURGER", "FRIES", "CHIPS", "CANDY", "COKE", "SODA", "HOTDOG", "DOUGHNUT"];
+        const isBad = unhealthy.some(u => item.includes(u));
 
-            // 3. Gắn canvas của webcam vào container
-            document.getElementById("webcam-container").appendChild(webcam.canvas);
-            
-            document.getElementById("label").innerText = "Đã sẵn sàng! Đưa món ăn vào trước camera...";
-        } catch (error) {
-            // Xử lý lỗi
-            console.error("Lỗi khởi tạo:", error);
-            document.getElementById("label").innerHTML = 
-                `LỖI KHỞI TẠO: ${error.message} <br> 
-                 <small>Kiểm tra quyền truy cập camera hoặc đường dẫn model (cần Live Server/Hosting).</small>`;
-        }
-    }
+        resName.innerText = item;
+        if (isBad) {
+            resName.className = "unhealthy";
+            resDesc.innerText = "❌ MÓN NÀY KHÔNG LÀNH MẠNH ĐÂU HUY!";
+        } else {
+            resName.className = "healthy";
+            resDesc.innerText = "✅ MÓN NÀY ĂN ĐƯỢC, LÀNH MẠNH ĐÓ!";
+        }
+        
+        status.innerText = "QUÉT HOÀN TẤT";
+    }
 
-    async function loop() {
-        webcam.update(); // Cập nhật khung hình
-        await predict();
-        window.requestAnimationFrame(loop);
-    }
+    // Đồng hồ
+    setInterval(() => { 
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString('vi-VN'); 
+    }, 1000);
 
-    async function predict() {
-        // Dự đoán và tìm ra kết quả tốt nhất
-        const prediction = await model.predict(webcam.canvas);
-        let best = prediction[0];
-        for (let i = 1; i < prediction.length; i++) {
-            if (prediction[i].probability > best.probability) {
-                best = prediction[i];
-            }
-        }
-        
-        // Chỉ hiển thị TÊN LỚP (best.className) - Theo yêu cầu của bạn
-        document.getElementById("label").innerHTML = 
-            `${best.className}`; 
-    }
-
-    init();
+    startCam();
+    initAI();
 </script>
+
 </body>
-
 </html>
-
