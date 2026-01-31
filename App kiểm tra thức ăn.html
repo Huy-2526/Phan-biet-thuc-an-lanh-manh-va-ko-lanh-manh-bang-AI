@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Health Scanner v3.0</title>
+    <title>AI Health Scanner v3.5 - Huy Special Edition</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
@@ -13,8 +13,7 @@
         body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; touch-action: manipulation; }
         
         header { background: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--navy); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .header-left { display: flex; align-items: center; gap: 10px; }
-        .header-left .brand { font-weight: 800; color: var(--navy); font-size: 1rem; }
+        .brand { font-weight: 800; color: var(--navy); font-size: 1rem; }
         
         .main-content { display: flex; flex-direction: column; max-width: 1200px; margin: 10px auto; padding: 0 10px; gap: 15px; }
         @media (min-width: 768px) { .main-content { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; padding: 20px; } }
@@ -22,44 +21,33 @@
         .camera-container { background: #000; border-radius: 15px; position: relative; aspect-ratio: 4/3; overflow: hidden; border: 3px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 100%; }
         video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         
-        .control-panel { display: flex; flex-direction: column; gap: 15px; }
-        .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .status-header { background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center; font-weight: 800; color: var(--navy); border-left: 4px solid var(--navy); margin-bottom: 12px; font-size: 0.9rem; transition: 0.3s; }
+        .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .status-header { background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center; font-weight: 800; color: var(--navy); border-left: 4px solid var(--navy); margin-bottom: 12px; font-size: 0.9rem; }
         
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; background: var(--navy); color: white; margin-bottom: 10px; transition: 0.3s; font-size: 1rem; }
-        .btn:active { transform: scale(0.95); }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; background: var(--navy); color: white; margin-bottom: 10px; font-size: 1rem; }
+        .btn-scan { background: #238636 !important; border: 2px solid #00ff00 !important; animation: blink 1.5s infinite; }
 
-        .btn-scan { 
-            background: #238636 !important; 
-            border: 2px solid #00ff00 !important;
-            animation: blink-animation 1.5s infinite !important;
-        }
-
-        @keyframes blink-animation {
+        @keyframes blink {
             0% { box-shadow: 0 0 5px #1e90ff; }
-            50% { box-shadow: 0 0 25px #00ff00, 0 0 40px #00ff00; transform: scale(1.02); }
+            50% { box-shadow: 0 0 20px #00ff00; transform: scale(1.01); }
             100% { box-shadow: 0 0 5px #1e90ff; }
         }
 
-        #res-box { text-align: center; padding: 25px 10px; border-radius: 8px; background: #f8f9fa; border: 2px dashed #ddd; transition: 0.5s; }
-        #res-text { font-size: 1.8rem; font-weight: 900; display: block; margin-bottom: 8px; }
-        #res-sub { font-size: 0.95rem; font-weight: 600; color: #666; }
+        #res-box { text-align: center; padding: 25px 10px; border-radius: 8px; background: #f8f9fa; border: 2px dashed #ddd; transition: 0.4s; }
+        #res-text { font-size: 1.6rem; font-weight: 900; display: block; margin-bottom: 8px; }
+        #res-sub { font-size: 0.9rem; font-weight: 600; color: #666; }
 
         .healthy-bg { background: #e8f5e9 !important; border-color: #2e7d32 !important; }
         .unhealthy-bg { background: #ffebee !important; border-color: #c62828 !important; }
-        
         .healthy-text { color: #2e7d32; }
         .unhealthy-text { color: #c62828; }
-
-        #clock { font-weight: bold; font-size: 0.8rem; color: var(--navy); }
+        #clock { font-weight: bold; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="header-left">
-        <div class="brand">AI FOOD CHECKER - v3.0</div>
-    </div>
+    <div class="brand">AI HEALTH SCANNER v3.5 - HUY</div>
     <div id="clock">00:00:00</div>
 </header>
 
@@ -70,16 +58,15 @@
 
     <div class="control-panel">
         <div class="card">
-            <div id="status" class="status-header">HỆ THỐNG ĐANG TẢI AI...</div>
-            <button class="btn btn-scan" onclick="scanFood()">BẤM ĐỂ QUÉT TẤT CẢ</button>
-            <button class="btn" style="background:#666" onclick="location.reload()">LÀM MỚI HỆ THỐNG</button>
+            <div id="status" class="status-header">ĐANG TẢI NÃO BỘ AI...</div>
+            <button class="btn btn-scan" onclick="scanFood()">QUÉT NGAY BẠN ƠI!</button>
+            <button class="btn" style="background:#555" onclick="location.reload()">RESET MÁY</button>
         </div>
 
         <div class="card">
-            <div style="font-weight: 800; color: var(--navy); font-size: 0.85rem; margin-bottom: 10px; text-transform: uppercase;">Kết quả phân tích dinh dưỡng</div>
             <div id="res-box">
-                <span id="res-text">ĐANG ĐỢI...</span>
-                <span id="res-sub">Bạn hãy đưa thực phẩm lại gần camera</span>
+                <span id="res-text">READY!</span>
+                <span id="res-sub">Hãy đưa món cần soi vào khung hình</span>
             </div>
         </div>
     </div>
@@ -93,87 +80,67 @@
     const resText = document.getElementById('res-text');
     const resSub = document.getElementById('res-sub');
 
-    // Mở Camera
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
         .then(s => video.srcObject = s);
 
-    // Tải AI
     async function initAI() {
         try {
-            model = await mobilenet.load({version: 1, alpha: 0.25});
-            status.innerText = "HỆ THỐNG ĐÃ SẴN SÀNG";
-            status.style.borderLeftColor = "var(--green)";
+            model = await mobilenet.load();
+            status.innerText = "Hệ thống đã sẵn sàng!";
         } catch (e) {
-            status.innerText = "LỖI TẢI AI! THỬ LẠI...";
+            status.innerText = "Lỗi kết nối AI!";
         }
     }
 
     async function scanFood() {
         if (!model) return;
         
-        status.innerText = "ĐANG SOI CẬN CẢNH...";
-        resBox.className = "";
-        resText.innerText = "CHỜ XÍU...";
-        resText.className = "";
-
+        status.innerText = "AI ĐANG PHÂN TÍCH...";
         const predictions = await model.classify(video);
-        const allResults = predictions.map(p => p.className.toLowerCase()).join(" ");
+        const results = predictions.map(p => p.className.toLowerCase()).join(" ");
+        console.log("AI thấy:", results);
 
-        // DANH SÁCH TỪ KHÓA TẬN DIỆT - HUY V3.0
+        // DANH SÁCH TẬN DIỆT (CHẶN STING, ĐỒ NGỌT, ĐỒ CHIÊN)
         const badKeywords = [
-            // Đồ ăn nhanh & Dầu mỡ (Tóm gọn Pizza mặt trên/dưới)
-            "pizza", "burger", "fries", "chips", "hotdog", "fried", "dough", "bread", "toast", 
-            "bakery", "sandwich", "noodle", "instant", "ramen", "taco", "burrito", "snack",
-            
-            // Đồ ngọt & Bánh kẹo (Chặn Oreo, Bánh rán, Kẹo)
-            "candy", "chocolate", "sweet", "sugar", "donut", "doughnut", "cookie", "biscuit", 
-            "pastry", "cake", "ice cream", "dessert", "muffin", "syrup", "honey", "pudding",
-            
-            // Đồ uống (Chặn nước ngọt, trà sữa, cafe)
-            "coke", "soda", "pop", "cola", "coffee", "espresso", "latte", "juice", "beverage", 
-            "drink", "milkshake", "smoothie", "cocktail", "pepsi",
-            
-            // Bao bì (Chặn mặt sau hộp, mã vạch, túi nilon)
-            "package", "packet", "carton", "box", "barcode", "label", "container", "plastic", 
-            "wrapper", "bag", "envelope", "paper",
-            
-            // Các vật thể hay nhầm lẫn (Chống lỗi Barbershop, Bánh xe)
-            "barber", "pole", "wheel", "tire", "disk", "circular", "round", "button", "gear",
-            "puck", "dial", "lens", "camera", "barometer", "stopwatch", "machine"
+            "pizza", "burger", "fries", "chips", "hotdog", "fried", "dough", "bread", "noodle", "ramen",
+            "candy", "chocolate", "sweet", "sugar", "donut", "cookie", "cake", "ice cream",
+            "bottle", "wine", "beer", "can", "pop", "soda", "cola", "coke", "espresso", "sauce",
+            "package", "packet", "carton", "box", "plastic", "wrapper", "container"
         ];
 
-        // Ưu tiên đồ xanh (Nếu thấy rau củ thì dù dính từ khóa khác vẫn cho qua)
-        const goodKeywords = ["apple", "banana", "vegetable", "fruit", "salad", "cucumber", "carrot", "broccoli"];
+        // DANH SÁCH TỐT (RAU CỦ QUẢ TƯƠI)
+        const goodKeywords = ["apple", "banana", "orange", "lemon", "broccoli", "cucumber", "carrot", "vegetable", "fruit", "salad"];
 
-        const isUnhealthy = badKeywords.some(word => allResults.includes(word));
-        const isHealthy = goodKeywords.some(word => allResults.includes(word));
+        const hasBad = badKeywords.some(word => results.includes(word));
+        const hasGood = goodKeywords.some(word => results.includes(word));
 
-        // Logic: Nếu dính từ khóa xấu và không phải đồ tươi sống
-        if (isUnhealthy && !isHealthy) {
-            resText.innerText = "❌ HẠN CHẾ ĂN/UỐNG";
+        // LOGIC PHÂN BIỆT: Sting thường bị nhận diện là "wine" hoặc "bottle" -> Chặn luôn.
+        if (hasBad && !hasGood) {
+            resText.innerText = "❌ HẠN CHẾ ĂN";
             resText.className = "unhealthy-text";
-            resSub.innerText = "Món này không tốt cho sức khỏe đâu bạn ơi!";
+            resSub.innerText = "Cái này không tốt cho Huy đâu, đừng dùng nhiều nha!";
             resBox.className = "unhealthy-bg";
-            status.style.borderLeftColor = "var(--red)";
-        } else {
-            resText.innerText = "✅ ĂN/UỐNG ĐƯỢC";
+        } else if (hasGood) {
+            resText.innerText = "✅ ĂN ĐƯỢC";
             resText.className = "healthy-text";
-            resSub.innerText = "Lành mạnh tuyệt vời! Cứ thoải mái nha bạn.";
+            resSub.innerText = "Món này quá chuẩn! Cứ thế phát huy bạn ơi.";
             resBox.className = "healthy-bg";
-            status.style.borderLeftColor = "var(--green)";
+        } else {
+            resText.innerText = "⚠️ CẨN THẬN";
+            resText.className = "";
+            resSub.innerText = "AI chưa rõ món này, nhưng cái gì đóng gói thì nên bớt lại.";
+            resBox.className = "";
         }
         
-        status.innerText = "QUÉT HOÀN TẤT";
+        status.innerText = "QUÉT XONG!";
     }
 
-    // Cập nhật đồng hồ
     setInterval(() => { 
         document.getElementById('clock').innerText = new Date().toLocaleTimeString('vi-VN'); 
     }, 1000);
 
     initAI();
 </script>
-
 </body>
 </html>
 
