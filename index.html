@@ -162,12 +162,12 @@
         status.innerText = "ĐANG PHÂN TÍCH... (0/5)";
         let combinedResults = "";
         
-        for(let i = 1; i <= 5; i++) {
-            status.innerText = `ĐANG SOI KỸ... (${i}/5)`;
+        for(let i = 1; i <= 10; i++) {
+            status.innerText = `ĐANG SOI KỸ... (${i}/10)`;
             const predictions = await model.classify(video);
             
             const filtered = predictions
-                .filter(p => p.probability > 0.15)
+                .filter(p => p.probability > 0.19)
                 .map(p => p.className.toLowerCase())
                 .join(" ");
             
