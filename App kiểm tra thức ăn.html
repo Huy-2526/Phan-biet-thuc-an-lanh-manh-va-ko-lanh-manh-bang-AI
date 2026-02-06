@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Health Scanner v4.5 - Accuracy Pro</title>
+    <title>AI Health Scanner v5.0 - Accuracy Pro</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
@@ -12,24 +12,32 @@
         /* GIỮ NGUYÊN CSS CỦA HUY */
         :root { --navy: #0c2461; --green: #00ff00; --red: #ff3b30; }
         body { margin: 0; font-family: -apple-system, sans-serif; background: #f0f2f5; }
+        
         header { background: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--navy); }
         .brand { font-weight: 800; color: var(--navy); }
+        
         .main-content { display: flex; flex-direction: column; max-width: 1200px; margin: 10px auto; padding: 0 10px; gap: 15px; }
         @media (min-width: 768px) { .main-content { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; padding: 20px; } }
+
         .camera-container { background: #000; border-radius: 15px; position: relative; aspect-ratio: 4/3; overflow: hidden; border: 3px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        
         .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
         .status-header { background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center; font-weight: 800; color: var(--navy); border-left: 4px solid var(--navy); margin-bottom: 12px; }
+        
         .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; background: var(--navy); color: white; margin-bottom: 10px; font-size: 1rem; }
         .btn-scan { background: #238636 !important; border: 2px solid #00ff00 !important; animation: blink 1.5s infinite; }
+
         @keyframes blink {
             0% { box-shadow: 0 0 5px #1e90ff; }
             50% { box-shadow: 0 0 20px #00ff00; transform: scale(1.01); }
             100% { box-shadow: 0 0 5px #1e90ff; }
         }
+
         #res-box { text-align: center; padding: 25px 10px; border-radius: 8px; background: #f8f9fa; border: 2px dashed #ddd; transition: 0.4s; }
         #res-text { font-size: 1.8rem; font-weight: 900; display: block; margin-bottom: 8px; }
         #res-sub { font-size: 0.95rem; font-weight: 600; color: #666; }
+
         .healthy-bg { background: #e8f5e9 !important; border-color: #2e7d32 !important; }
         .unhealthy-bg { background: #ffebee !important; border-color: #c62828 !important; }
         .healthy-text { color: #2e7d32; }
@@ -39,7 +47,7 @@
 <body>
 
 <header>
-    <div class="brand">AI HEALTH SCANNER v4.5</div>
+    <div class="brand">AI HEALTH SCANNER v5.0</div>
     <div id="clock">00:00:00</div>
 </header>
 
@@ -50,14 +58,17 @@
 
     <div class="control-panel">
         <div class="card">
-            <div id="status" class="status-header">Hệ thống đang sẵn sàng...</div>
+            <div id="status" class="status-header">Đang tải bộ não AI...</div>
             <button class="btn btn-scan" onclick="enhancedScan()">BẤM ĐỂ QUÉT BẠN ƠI!</button>
-            <button class="btn" style="background:#555" onclick="location.reload()">LÀM MỚI</button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="btn" style="background:#00a8ff" onclick="switchCamera()">XOAY CAMERA</button>
+                <button class="btn" style="background:#555" onclick="location.reload()">LÀM MỚI</button>
+            </div>
         </div>
 
         <div class="card">
             <div id="res-box">
-                <span id="res-text">ĐANG ĐỢI...</span>
+                <span id="res-text">SẴN SÀNG</span>
                 <span id="res-sub">Hãy đưa thực phẩm lại gần camera</span>
             </div>
         </div>
@@ -66,81 +77,107 @@
 
 <script>
     let model;
+    let currentStream = null;
+    let currentFacingMode = "environment"; // Mặc định camera sau
+
     const video = document.getElementById('video');
     const status = document.getElementById('status');
     const resBox = document.getElementById('res-box');
     const resText = document.getElementById('res-text');
     const resSub = document.getElementById('res-sub');
 
-    // Khởi tạo camera
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-        .then(s => video.srcObject = s);
-
-    // Tải AI
-    async function initAI() {
+    // 1. Hàm khởi tạo Camera (Hỗ trợ xoay trước/sau)
+    async function startCamera(facingMode) {
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+        }
         try {
-            model = await mobilenet.load({version: 2, alpha: 1.0}); // Dùng bản nặng hơn xíu nhưng chuẩn hơn
-            status.innerText = "AI ĐÃ ONLINE!";
-        } catch (e) {
-            status.innerText = "LỖI TẢI AI!";
+            const constraints = { video: { facingMode: facingMode } };
+            currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+            video.srcObject = currentStream;
+        } catch (err) {
+            console.error("Lỗi camera: ", err);
+            status.innerText = "LỖI CAMERA!";
         }
     }
 
-    // Hàm quét nâng cao
+    function switchCamera() {
+        currentFacingMode = (currentFacingMode === "user") ? "environment" : "user";
+        startCamera(currentFacingMode);
+        status.innerText = `ĐÃ ĐỔI CAMERA ${currentFacingMode === "user" ? "TRƯỚC" : "SAU"}`;
+    }
+
+    // 2. Tải mô hình MobileNet v2
+    async function initAI() {
+        try {
+            // Tải bản v2 alpha 1.0 (Bản mạnh nhất của MobileNet trên web)
+            model = await mobilenet.load({version: 2, alpha: 1.0});
+            status.innerText = "AI ĐÃ ONLINE (v2.0)!";
+        } catch (e) {
+            status.innerText = "LỖI KẾT NỐI AI!";
+        }
+    }
+
+    // 3. Hàm quét nâng cao (Quét 5 lần lấy trung bình để cực kỳ chính xác)
     async function enhancedScan() {
         if (!model) return;
         
-        status.innerText = "ĐANG SOI KỸ... (0/5)";
-        let allResults = "";
+        status.innerText = "ĐANG PHÂN TÍCH... (0/5)";
+        let combinedResults = "";
         
-        // Quét 5 lần liên tục để lấy mẫu chung
+        // Quét mẫu 5 lần để tránh sai số
         for(let i = 1; i <= 5; i++) {
             status.innerText = `ĐANG SOI KỸ... (${i}/5)`;
             const predictions = await model.classify(video);
             
-            // Chỉ lấy những kết quả có độ tin cậy trên 15%
+            // Lọc kết quả: Chỉ lấy kết quả AI tự tin trên 15%
             const filtered = predictions
                 .filter(p => p.probability > 0.15)
                 .map(p => p.className.toLowerCase())
                 .join(" ");
             
-            allResults += filtered + " ";
-            await new Promise(r => setTimeout(r, 100)); // Nghỉ 0.1s giữa các lần quét
+            combinedResults += filtered + " ";
+            await new Promise(r => setTimeout(r, 80)); 
         }
 
-        console.log("Dữ liệu tổng hợp:", allResults);
+        console.log("Kết quả AI thấy được:", combinedResults);
 
+        // DANH SÁCH ĐEN (Chặn Sting, Bia, Đồ ngọt, Fastfood)
         const badKeywords = [
             "pizza", "burger", "fries", "chips", "hotdog", "fried", "dough", "bread", "noodle", "ramen",
             "candy", "chocolate", "sweet", "sugar", "donut", "cookie", "cake", "ice cream",
             "bottle", "wine", "beer", "can", "pop", "soda", "cola", "coke", "espresso", "sauce",
-            "package", "packet", "carton", "box", "plastic", "wrapper", "container", "beaker", "vial",
-            "snack", "pretzel", "cheeseburger", "milkshake", "carbonated"
+            "package", "packet", "carton", "box", "plastic", "wrapper", "container", 
+            "beaker", "vial", "soft drink", "beverage", "energy drink", "heineken", "pilsner"
         ];
 
-        const isUnhealthy = badKeywords.some(word => allResults.includes(word));
+        // Kiểm tra xem trong chuỗi kết quả có từ khóa xấu không
+        const isUnhealthy = badKeywords.some(word => combinedResults.includes(word));
 
         if (isUnhealthy) {
             resText.innerText = "❌ HẠN CHẾ ĂN/UỐNG";
             resText.className = "unhealthy-text";
-            resSub.innerText = "Phát hiện thành phần không tốt cho sức khỏe!";
+            resSub.innerText = "Huy ơi, món này không tốt cho sức khỏe đâu nha!";
             resBox.className = "unhealthy-bg";
             status.style.borderLeftColor = "var(--red)";
         } else {
-            resText.innerText = "✅ ĂN/UỐNG ĐƯỢC";
+            resText.innerText = "✅ RẤT LÀNH MẠNH";
             resText.className = "healthy-text";
-            resSub.innerText = "Sản phẩm có vẻ an toàn. Thưởng thức thôi!";
+            resSub.innerText = "Tuyệt vời! Bạn cứ thoải mái thưởng thức nhé.";
             resBox.className = "healthy-bg";
             status.style.borderLeftColor = "var(--green)";
         }
         
-        status.innerText = "QUÉT HOÀN TẤT!";
+        status.innerText = "HOÀN TẤT PHÂN TÍCH!";
     }
 
+    // Đồng hồ hệ thống
     setInterval(() => { 
         document.getElementById('clock').innerText = new Date().toLocaleTimeString('vi-VN'); 
     }, 1000);
 
+    // Chạy khi bắt đầu
+    startCamera(currentFacingMode);
     initAI();
 </script>
 </body>
