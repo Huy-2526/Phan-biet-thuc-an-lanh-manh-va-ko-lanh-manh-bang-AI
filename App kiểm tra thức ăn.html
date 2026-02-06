@@ -5,16 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI Health Scanner v5.0 - Accuracy Pro</title>
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
 
     <style>
-        /* GIỮ NGUYÊN CSS CỦA HUY */
-        :root { --navy: #0c2461; --green: #00ff00; --red: #ff3b30; }
-        body { margin: 0; font-family: -apple-system, sans-serif; background: #f0f2f5; }
+        /* THIẾT LẬP FONT QUICKSAND CHO TOÀN BỘ TRANG */
+        :root { 
+            --navy: #0c2461; 
+            --green: #00ff00; 
+            --red: #ff3b30; 
+        }
+
+        body { 
+            margin: 0; 
+            font-family: "Quicksand", sans-serif; 
+            font-optical-sizing: auto;
+            font-weight: 500; /* Độ đậm vừa phải cho dễ đọc */
+            background: #f0f2f5; 
+        }
         
-        header { background: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--navy); }
-        .brand { font-weight: 800; color: var(--navy); }
+        header { 
+            background: white; 
+            padding: 12px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 4px solid var(--navy); 
+        }
+
+        /* Dùng font Pacifico cho tên thương hiệu cho nghệ thuật chút nè */
+        .brand { 
+            font-family: "Pacifico", cursive; 
+            font-size: 1.2rem;
+            color: var(--navy); 
+        }
         
         .main-content { display: flex; flex-direction: column; max-width: 1200px; margin: 10px auto; padding: 0 10px; gap: 15px; }
         @media (min-width: 768px) { .main-content { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; padding: 20px; } }
@@ -25,7 +53,20 @@
         .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
         .status-header { background: #f8f9fa; padding: 10px; border-radius: 6px; text-align: center; font-weight: 800; color: var(--navy); border-left: 4px solid var(--navy); margin-bottom: 12px; }
         
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; background: var(--navy); color: white; margin-bottom: 10px; font-size: 1rem; }
+        /* Đảm bảo các nút cũng dùng font mới */
+        .btn { 
+            width: 100%; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            background: var(--navy); 
+            color: white; 
+            margin-bottom: 10px; 
+            font-size: 1rem; 
+            font-family: "Quicksand", sans-serif;
+        }
         .btn-scan { background: #238636 !important; border: 2px solid #00ff00 !important; animation: blink 1.5s infinite; }
 
         @keyframes blink {
@@ -47,7 +88,7 @@
 <body>
 
 <header>
-    <div class="brand">AI HEALTH SCANNER v5.0</div>
+    <div class="brand">AI Health Scanner v5.0</div>
     <div id="clock">00:00:00</div>
 </header>
 
@@ -78,7 +119,7 @@
 <script>
     let model;
     let currentStream = null;
-    let currentFacingMode = "environment"; // Mặc định camera sau
+    let currentFacingMode = "environment"; 
 
     const video = document.getElementById('video');
     const status = document.getElementById('status');
@@ -86,7 +127,6 @@
     const resText = document.getElementById('res-text');
     const resSub = document.getElementById('res-sub');
 
-    // 1. Hàm khởi tạo Camera (Hỗ trợ xoay trước/sau)
     async function startCamera(facingMode) {
         if (currentStream) {
             currentStream.getTracks().forEach(track => track.stop());
@@ -107,10 +147,8 @@
         status.innerText = `ĐÃ ĐỔI CAMERA ${currentFacingMode === "user" ? "TRƯỚC" : "SAU"}`;
     }
 
-    // 2. Tải mô hình MobileNet v2
     async function initAI() {
         try {
-            // Tải bản v2 alpha 1.0 (Bản mạnh nhất của MobileNet trên web)
             model = await mobilenet.load({version: 2, alpha: 1.0});
             status.innerText = "AI ĐÃ ONLINE (v2.0)!";
         } catch (e) {
@@ -118,19 +156,16 @@
         }
     }
 
-    // 3. Hàm quét nâng cao (Quét 5 lần lấy trung bình để cực kỳ chính xác)
     async function enhancedScan() {
         if (!model) return;
         
         status.innerText = "ĐANG PHÂN TÍCH... (0/5)";
         let combinedResults = "";
         
-        // Quét mẫu 5 lần để tránh sai số
         for(let i = 1; i <= 5; i++) {
             status.innerText = `ĐANG SOI KỸ... (${i}/5)`;
             const predictions = await model.classify(video);
             
-            // Lọc kết quả: Chỉ lấy kết quả AI tự tin trên 15%
             const filtered = predictions
                 .filter(p => p.probability > 0.15)
                 .map(p => p.className.toLowerCase())
@@ -140,9 +175,6 @@
             await new Promise(r => setTimeout(r, 80)); 
         }
 
-        console.log("Kết quả AI thấy được:", combinedResults);
-
-        // DANH SÁCH ĐEN (Chặn Sting, Bia, Đồ ngọt, Fastfood)
         const badKeywords = [
             "pizza", "burger", "fries", "chips", "hotdog", "fried", "dough", "bread", "noodle", "ramen",
             "candy", "chocolate", "sweet", "sugar", "donut", "cookie", "cake", "ice cream",
@@ -151,7 +183,6 @@
             "beaker", "vial", "soft drink", "beverage", "energy drink", "heineken", "pilsner"
         ];
 
-        // Kiểm tra xem trong chuỗi kết quả có từ khóa xấu không
         const isUnhealthy = badKeywords.some(word => combinedResults.includes(word));
 
         if (isUnhealthy) {
@@ -171,12 +202,10 @@
         status.innerText = "HOÀN TẤT PHÂN TÍCH!";
     }
 
-    // Đồng hồ hệ thống
     setInterval(() => { 
         document.getElementById('clock').innerText = new Date().toLocaleTimeString('vi-VN'); 
     }, 1000);
 
-    // Chạy khi bắt đầu
     startCamera(currentFacingMode);
     initAI();
 </script>
