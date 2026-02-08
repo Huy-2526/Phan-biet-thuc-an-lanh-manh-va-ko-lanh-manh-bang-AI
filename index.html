@@ -167,7 +167,7 @@
             const predictions = await model.classify(video);
             
             const filtered = predictions
-                .filter(p => p.probability > 0.30)
+                .filter(p => p.probability > 0.25)
                 .map(p => p.className.toLowerCase())
                 .join(" ");
             
